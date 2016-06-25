@@ -34,15 +34,6 @@ struct Data
     //dummy class
 };
 
-struct Analysis
-{
-    Data & data;
-
-    Analysis(Data & data)
-        : data(data) {}
-    //dummy class
-};
-
 struct DisassemblerBlock;
 
 struct Point
@@ -121,6 +112,7 @@ struct Instr
 {
     duint addr = 0;
     Text text;
+    std::vector<unsigned char> opcode; //instruction bytes
 };
 
 struct Block
@@ -163,6 +155,25 @@ struct Function
     std::vector<Block> blocks;
 };
 
+struct Analysis
+{
+    Data & data;
+    std::unordered_map<duint, Function> functions;
+
+    Analysis(Data & data)
+        : data(data) {}
+
+    bool find_instr(duint addr, duint & func, duint & instr)
+    {
+        Q_UNUSED(addr);
+        Q_UNUSED(func);
+        Q_UNUSED(instr);
+        return false;
+    }
+
+    //dummy class
+};
+
 class DisassemblerView : public QAbstractScrollArea
 {
     Q_OBJECT
@@ -201,6 +212,8 @@ public:
     DisassemblerEdge routeEdge(EdgesVector & horiz_edges, EdgesVector & vert_edges, Matrix<bool> & edge_valid, DisassemblerBlock & start, DisassemblerBlock & end, QColor color);
     void renderFunction(Function & func);
     void show_cur_instr();
+    bool navigate(duint addr);
+    void fontChanged();
 
 public slots:
     void updateTimerEvent();

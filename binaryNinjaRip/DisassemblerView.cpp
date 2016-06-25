@@ -1025,6 +1025,11 @@ void DisassemblerView::renderFunction(Function & func)
     this->viewport()->update(0, 0, areaSize.width(), areaSize.height());
 }
 
+void DisassemblerView::updateTimerEvent()
+{
+    //TODO
+}
+
 void DisassemblerView::show_cur_instr()
 {
     for(auto & blockIt : this->blocks)
@@ -1048,7 +1053,49 @@ void DisassemblerView::show_cur_instr()
     }
 }
 
-void DisassemblerView::updateTimerEvent()
+bool DisassemblerView::navigate(duint addr)
 {
+        //Check to see if address is within current function
+        for(auto & blockIt : this->blocks)
+        {
+            auto & block = blockIt.second;
+            auto row = int(block.block.header_text.lines.size());
+            for(auto & instr : block.block.instrs)
+            {
+                if((addr >= instr.addr) && (addr < (instr.addr + int(instr.opcode.size()))))
+                {
+                    this->cur_instr = instr.addr;
+                    this->show_cur_instr();
+                    this->viewport()->update();
+                    return true;
+                }
+                row += int(instr.text.lines.size());
+            }
+        }
 
+        //Check other functions for this address
+        duint func, instr;
+        if(this->analysis.find_instr(addr, func, instr))
+        {
+            this->function = func;
+            this->cur_instr = instr;
+            this->highlight_token = nullptr;
+            this->ready = false;
+            this->desired_pos = nullptr;
+            this->viewport()->update();
+            return true;
+        }
+
+        return false;
+}
+
+void DisassemblerView::fontChanged()
+{
+    this->initFont();
+
+    if(this->ready)
+    {
+        //Rerender function to update layout
+        this->renderFunction(this->analysis.functions[this->function]);
+    }
 }
