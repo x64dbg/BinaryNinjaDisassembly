@@ -13,6 +13,7 @@
 #include <unordered_set>
 #include <queue>
 #include <algorithm>
+#include <QMutex>
 
 typedef size_t duint;
 
@@ -150,6 +151,7 @@ struct DisassemblerBlock
 
 struct Function
 {
+    bool ready;
     duint entry;
     duint update_id;
     std::vector<Block> blocks;
@@ -157,8 +159,11 @@ struct Function
 
 struct Analysis
 {
-    Data & data;
+    Data data;
     std::unordered_map<duint, Function> functions;
+    bool ready = false;
+    duint update_id = 0;
+    QString status = "Analyzing...";
 
     Analysis(Data & data)
         : data(data) {}
@@ -178,7 +183,7 @@ class DisassemblerView : public QAbstractScrollArea
 {
     Q_OBJECT
 public:
-    DisassemblerView(QWidget* parent, const Data & data, const View & view);
+    DisassemblerView(const Analysis & analysis, QWidget* parent = nullptr);
     void initFont();
     void adjustSize(int width, int height);
     void resizeEvent(QResizeEvent* event);
@@ -186,7 +191,6 @@ public:
     void set_cursor_pos(duint addr);
     std::tuple<duint, duint> get_selection_range();
     void set_selection_range(std::tuple<duint, duint> range);
-    bool write(const Data & data);
     void copy_address();
     //void analysis_thread_proc();
     //void closeRequest();
@@ -202,6 +206,7 @@ public:
     void prepareGraphNode(DisassemblerBlock & block);
     void adjustGraphLayout(DisassemblerBlock & block, int col, int row);
     void computeGraphLayout(DisassemblerBlock & block);
+
     template<typename T>
     using Matrix = std::vector<std::vector<T>>;
     using EdgesVector = Matrix<std::vector<bool>>;
@@ -220,8 +225,6 @@ public slots:
 
 private:
     QString status;
-    View view;
-    Data data;
     Analysis analysis;
     duint function;
     QTimer* updateTimer;

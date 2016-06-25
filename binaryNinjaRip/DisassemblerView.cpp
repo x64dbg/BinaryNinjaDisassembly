@@ -5,19 +5,17 @@
 #include <QClipboard>
 #include <QApplication>
 
-DisassemblerView::DisassemblerView(QWidget* parent, const Data & data, const View & view)
+DisassemblerView::DisassemblerView(const Analysis & analysis, QWidget* parent)
     : QAbstractScrollArea(parent),
-      view(view),
-      data(data),
       analysis(analysis)
 {
-    this->status = "";
+    this->status = "Loading...";
 
     //Create analysis and start it in another thread
     //Dummy
 
     //Start disassembly view at the entry point of the binary
-    this->function = this->data.entry;
+    this->function = this->analysis.data.entry;
     this->update_id = 0;
     this->ready = false;
     this->desired_pos = nullptr;
@@ -110,14 +108,6 @@ void DisassemblerView::set_selection_range(std::tuple<duint, duint> range)
     this->set_cursor_pos(std::get<0>(range));
 }
 
-bool DisassemblerView::write(const Data & data)
-{
-    duint pos = this->get_cursor_pos();
-    if(pos == 0)
-        return false;
-    return this->data.write(data);
-}
-
 void DisassemblerView::copy_address()
 {
     QClipboard* clipboard = QApplication::clipboard();
@@ -147,7 +137,7 @@ void DisassemblerView::paintEvent(QPaintEvent* event)
         p.setBrush(QBrush(gradient));
         p.drawRect(0, 0, this->viewport()->size().width(), this->viewport()->size().height());
 
-        QString text = this->function ? "Loading..." : "No function selected";
+        QString text = this->function ? this->status : "No function selected";
         p.setPen(Qt::black);
         p.drawText((this->viewport()->size().width() / 2) - ((text.length() * this->charWidth) / 2),
                    (this->viewport()->size().height() / 2) + this->charOffset + this->baseline - (this->charHeight / 2),
@@ -1027,7 +1017,33 @@ void DisassemblerView::renderFunction(Function & func)
 
 void DisassemblerView::updateTimerEvent()
 {
-    //TODO
+    auto status = this->analysis.status;
+    if(status != this->status)
+    {
+        this->status = status;
+        this->viewport()->update();
+    }
+
+    //TODO: locking
+    if(this->function == 0)
+        return;
+
+    if(this->ready)
+    {
+        //Check for updated code
+        if(this->update_id != this->analysis.update_id)
+            this->renderFunction(this->analysis.functions[this->function]);
+    }
+
+    //View not up to date, check to see if active function is ready
+    if(this->analysis.functions.count(this->function))
+    {
+        if(this->analysis.functions[this->function].ready)
+        {
+            //Active function now ready, generate graph
+            this->renderFunction(this->analysis.functions[this->function]);
+        }
+    }
 }
 
 void DisassemblerView::show_cur_instr()
@@ -1055,38 +1071,38 @@ void DisassemblerView::show_cur_instr()
 
 bool DisassemblerView::navigate(duint addr)
 {
-        //Check to see if address is within current function
-        for(auto & blockIt : this->blocks)
+    //Check to see if address is within current function
+    for(auto & blockIt : this->blocks)
+    {
+        auto & block = blockIt.second;
+        auto row = int(block.block.header_text.lines.size());
+        for(auto & instr : block.block.instrs)
         {
-            auto & block = blockIt.second;
-            auto row = int(block.block.header_text.lines.size());
-            for(auto & instr : block.block.instrs)
+            if((addr >= instr.addr) && (addr < (instr.addr + int(instr.opcode.size()))))
             {
-                if((addr >= instr.addr) && (addr < (instr.addr + int(instr.opcode.size()))))
-                {
-                    this->cur_instr = instr.addr;
-                    this->show_cur_instr();
-                    this->viewport()->update();
-                    return true;
-                }
-                row += int(instr.text.lines.size());
+                this->cur_instr = instr.addr;
+                this->show_cur_instr();
+                this->viewport()->update();
+                return true;
             }
+            row += int(instr.text.lines.size());
         }
+    }
 
-        //Check other functions for this address
-        duint func, instr;
-        if(this->analysis.find_instr(addr, func, instr))
-        {
-            this->function = func;
-            this->cur_instr = instr;
-            this->highlight_token = nullptr;
-            this->ready = false;
-            this->desired_pos = nullptr;
-            this->viewport()->update();
-            return true;
-        }
+    //Check other functions for this address
+    duint func, instr;
+    if(this->analysis.find_instr(addr, func, instr))
+    {
+        this->function = func;
+        this->cur_instr = instr;
+        this->highlight_token = nullptr;
+        this->ready = false;
+        this->desired_pos = nullptr;
+        this->viewport()->update();
+        return true;
+    }
 
-        return false;
+    return false;
 }
 
 void DisassemblerView::fontChanged()

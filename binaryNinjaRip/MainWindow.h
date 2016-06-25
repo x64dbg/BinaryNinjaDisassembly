@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "DisassemblerView.h"
 
 namespace Ui {
 class MainWindow;
@@ -17,6 +18,7 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    DisassemblerView* mDisassemblerView;
 };
 
 #endif // MAINWINDOW_H

@@ -6,6 +6,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    Data data;
+    Analysis anal(data);
+    mDisassemblerView = new DisassemblerView(anal, this);
+    ui->centralWidget->layout()->addWidget(mDisassemblerView);
 }
 
 MainWindow::~MainWindow()
