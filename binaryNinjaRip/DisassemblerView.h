@@ -107,6 +107,27 @@ struct Text
 {
     std::vector<std::vector<Line>> lines;
     std::vector<std::vector<Token>> tokens;
+
+    Text() {}
+
+    Text(const QString & text, QColor color, duint addr)
+    {
+        Token tok;
+        tok.start = 0;
+        tok.length = text.length();
+        tok.type = "text";
+        tok.addr = addr;
+        tok.name = text;
+        std::vector<Token> tv;
+        tv.push_back(tok);
+        tokens.push_back(tv);
+        Line line;
+        line.text = text;
+        line.color = color;
+        std::vector<Line> lv;
+        lv.push_back(line);
+        lines.push_back(lv);
+    }
 };
 
 struct Instr
