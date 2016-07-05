@@ -160,7 +160,7 @@ void DisassemblerView::paintEvent(QPaintEvent* event)
     //Render each node
     for(auto & blockIt : this->blocks)
     {
-        auto & block = blockIt.second;
+        DisassemblerBlock & block = blockIt.second;
         //Render shadow
         p.setPen(QColor(0, 0, 0, 0));
         p.setBrush(QColor(0, 0, 0, 128));
@@ -181,7 +181,7 @@ void DisassemblerView::paintEvent(QPaintEvent* event)
         if (this->cur_instr != 0)
         {
             int y = block.y + (2 * this->charWidth) + (int(block.block.header_text.lines.size()) * this->charHeight);
-            for(auto & instr : block.block.instrs)
+            for(Instr & instr : block.block.instrs)
             {
                 if(instr.addr == this->cur_instr)
                 {
@@ -201,7 +201,7 @@ void DisassemblerView::paintEvent(QPaintEvent* event)
             int y = block.y + (2 * this->charWidth);
             for(auto & line : block.block.header_text.tokens)
             {
-                for(auto & token : line)
+                for(Token & token : line)
                 {
                     if(this->highlight_token->equalsToken(token))
                     {
@@ -213,11 +213,11 @@ void DisassemblerView::paintEvent(QPaintEvent* event)
                 }
                 y += this->charHeight;
             }
-            for(auto & instr : block.block.instrs)
+            for(Instr & instr : block.block.instrs)
             {
                 for(auto & line : instr.text.tokens)
                 {
-                    for(auto & token : line)
+                    for(Token & token : line)
                     {
                         if(this->highlight_token->equalsToken(token))
                         {
@@ -238,7 +238,7 @@ void DisassemblerView::paintEvent(QPaintEvent* event)
         for(auto & line : block.block.header_text.lines)
         {
             auto partx = x;
-            for(auto & part : line)
+            for(Line & part : line)
             {
                 p.setPen(part.color);
                 p.drawText(partx, y + this->charOffset + this->baseline, part.text);
@@ -246,12 +246,12 @@ void DisassemblerView::paintEvent(QPaintEvent* event)
             }
             y += this->charHeight;
         }
-        for(auto & instr : block.block.instrs)
+        for(Instr & instr : block.block.instrs)
         {
             for(auto & line : instr.text.lines)
             {
                 auto partx = x;
-                for(auto & part : line)
+                for(Line & part : line)
                 {
                     p.setPen(part.color);
                     p.drawText(partx, y + this->charOffset + this->baseline, part.text);
@@ -262,7 +262,7 @@ void DisassemblerView::paintEvent(QPaintEvent* event)
         }
 
         // Render edges
-        for(auto & edge : block.edges)
+        for(DisassemblerEdge & edge : block.edges)
         {
             p.setPen(edge.color);
             p.setBrush(edge.color);
@@ -283,7 +283,7 @@ bool DisassemblerView::isMouseEventInBlock(QMouseEvent* event)
     // Check each block for hits
     for(auto & blockIt : this->blocks)
     {
-        auto & block = blockIt.second;
+        DisassemblerBlock & block = blockIt.second;
         //Compute coordinate relative to text area in block
         int blockx = x - (block.x + (2 * this->charWidth));
         int blocky = y - (block.y + (2 * this->charWidth));
@@ -308,7 +308,7 @@ duint DisassemblerView::getInstrForMouseEvent(QMouseEvent* event)
     //Check each block for hits
     for(auto & blockIt : this->blocks)
     {
-        auto & block = blockIt.second;
+        DisassemblerBlock & block = blockIt.second;
         //Compute coordinate relative to text area in block
         int blockx = x - (block.x + (2 * this->charWidth));
         int blocky = y - (block.y + (2 * this->charWidth));
@@ -323,7 +323,7 @@ duint DisassemblerView::getInstrForMouseEvent(QMouseEvent* event)
         int cur_row = int(block.block.header_text.lines.size());
         if(row < cur_row)
             return block.block.entry;
-        for(auto & instr : block.block.instrs)
+        for(Instr & instr : block.block.instrs)
         {
             if(row < cur_row + int(instr.text.lines.size()))
                 return instr.addr;
@@ -344,7 +344,7 @@ bool DisassemblerView::getTokenForMouseEvent(QMouseEvent* event, Token & tokenOu
     //Check each block for hits
     for(auto & blockIt : this->blocks)
     {
-        auto & block = blockIt.second;
+        DisassemblerBlock & block = blockIt.second;
         //Compute coordinate relative to text area in block
         int blockx = x - (block.x + (2 * this->charWidth));
         int blocky = y - (block.y + (2 * this->charWidth));
@@ -362,7 +362,7 @@ bool DisassemblerView::getTokenForMouseEvent(QMouseEvent* event, Token & tokenOu
         {
             if(cur_row == row)
             {
-                for(auto & token : line)
+                for(Token & token : line)
                 {
                     if((col >= token.start) && (col < (token.start + token.length)))
                     {
@@ -374,13 +374,13 @@ bool DisassemblerView::getTokenForMouseEvent(QMouseEvent* event, Token & tokenOu
             }
             cur_row += 1;
         }
-        for(auto & instr : block.block.instrs)
+        for(Instr & instr : block.block.instrs)
         {
             for(auto & line : instr.text.tokens)
             {
                 if(cur_row == row)
                 {
-                    for(auto & token : line)
+                    for(Token & token : line)
                     {
                         if((col >= token.start) && (col < (token.start + token.length)))
                         {
@@ -400,7 +400,7 @@ bool DisassemblerView::getTokenForMouseEvent(QMouseEvent* event, Token & tokenOu
 bool DisassemblerView::find_instr(duint addr, Instr & instrOut)
 {
     for(auto & blockIt : this->blocks)
-        for(auto & instr : blockIt.second.block.instrs)
+        for(Instr & instr : blockIt.second.block.instrs)
             if(instr.addr == addr)
             {
                 instrOut = instr;
@@ -482,18 +482,18 @@ void DisassemblerView::prepareGraphNode(DisassemblerBlock & block)
     for(auto & line : block.block.header_text.lines)
     {
         int chars = 0;
-        for(auto & part : line)
+        for(Line & part : line)
             chars += part.text.length();
         if(chars > width)
             width = chars;
         height += 1;
     }
-    for(auto & instr : block.block.instrs)
+    for(Instr & instr : block.block.instrs)
     {
         for(auto & line : instr.text.lines)
         {
             int chars = 0;
-            for(auto & part : line)
+            for(Line & part : line)
                 chars += part.text.length();
             if(chars > width)
                 width = chars;
@@ -508,7 +508,7 @@ void DisassemblerView::adjustGraphLayout(DisassemblerBlock & block, int col, int
 {
     block.col += col;
     block.row += row;
-    for(auto & edge : block.new_exits)
+    for(duint & edge : block.new_exits)
         this->adjustGraphLayout(this->blocks[edge], col, row);
 }
 
@@ -517,7 +517,7 @@ void DisassemblerView::computeGraphLayout(DisassemblerBlock & block)
     //Compute child node layouts and arrange them horizontally
     int col = 0;
     int row_count = 1;
-    for(auto & edge : block.new_exits)
+    for(duint & edge : block.new_exits)
     {
         this->computeGraphLayout(this->blocks[edge]);
         this->adjustGraphLayout(this->blocks[edge], col, 1);
@@ -752,7 +752,7 @@ void DisassemblerView::renderFunction(Function & func)
 {
     //Create render nodes
     this->blocks.clear();
-    for(auto & block : func.blocks)
+    for(Block & block : func.blocks)
     {
         this->blocks[block.entry] = DisassemblerBlock(block);
         this->prepareGraphNode(this->blocks[block.entry]);
@@ -761,7 +761,7 @@ void DisassemblerView::renderFunction(Function & func)
     //Populate incoming lists
     for(auto & blockIt : this->blocks)
     {
-        auto & block = blockIt.second;
+        DisassemblerBlock & block = blockIt.second;
         for(auto & edge : block.block.exits)
             this->blocks[edge].incoming.push_back(block.block.entry);
     }
@@ -781,10 +781,10 @@ void DisassemblerView::renderFunction(Function & func)
         //First pick nodes that have single entry points
         while(!queue.empty())
         {
-            auto block = queue.front();
+            DisassemblerBlock block = queue.front();
             queue.pop();
 
-            for(auto & edge : block.block.exits)
+            for(duint & edge : block.block.exits)
             {
                 if(visited.count(edge))
                     continue;
@@ -807,10 +807,10 @@ void DisassemblerView::renderFunction(Function & func)
         DisassemblerBlock best_parent;
         for(auto & blockIt : this->blocks)
         {
-            auto & block = blockIt.second;
+            DisassemblerBlock & block = blockIt.second;
             if(!visited.count(block.block.entry))
                 continue;
-            for(auto & edge : block.block.exits)
+            for(duint & edge : block.block.exits)
             {
                 if(visited.count(edge))
                     continue;
@@ -855,16 +855,16 @@ void DisassemblerView::renderFunction(Function & func)
     }
     for(auto & blockIt : this->blocks)
     {
-        auto & block = blockIt.second;
+        DisassemblerBlock & block = blockIt.second;
         edge_valid[block.row][block.col + 1] = false;
     }
 
     //Perform edge routing
     for(auto & blockIt : this->blocks)
     {
-        auto & block = blockIt.second;
-        auto start = block;
-        for(auto & edge : block.block.exits)
+        DisassemblerBlock & block = blockIt.second;
+        auto start = block; //TODO: maybe needs to be a reference?
+        for(duint & edge : block.block.exits)
         {
             auto end = this->blocks[edge];
             QColor color(Qt::black);
@@ -897,7 +897,7 @@ void DisassemblerView::renderFunction(Function & func)
     initVec(row_height, this->blocks[func.entry].row_count + 1, 0);
     for(auto & blockIt : this->blocks)
     {
-        auto & block = blockIt.second;
+        DisassemblerBlock & block = blockIt.second;
         if((int(block.width / 2)) > col_width[block.col])
             col_width[block.col] = int(block.width / 2);
         if((int(block.width / 2)) > col_width[block.col + 1])
@@ -936,7 +936,7 @@ void DisassemblerView::renderFunction(Function & func)
     //Compute node positions
     for(auto & blockIt : this->blocks)
     {
-        auto & block = blockIt.second;
+        DisassemblerBlock & block = blockIt.second;
         block.x = int(
                     (col_x[block.col] + col_width[block.col] + 4 * col_edge_count[block.col + 1]) - (block.width / 2));
         if((block.x + block.width) > (
@@ -952,8 +952,8 @@ void DisassemblerView::renderFunction(Function & func)
     //Precompute coordinates for edges
     for(auto & blockIt : this->blocks)
     {
-        auto & block = blockIt.second;
-        for(auto & edge : block.edges)
+        DisassemblerBlock & block = blockIt.second;
+        for(DisassemblerEdge & edge : block.edges)
         {
             auto start = edge.points[0];
             //auto start_row = start.row; //TODO: bug?
@@ -1052,9 +1052,9 @@ void DisassemblerView::show_cur_instr()
 {
     for(auto & blockIt : this->blocks)
     {
-        auto & block = blockIt.second;
+        DisassemblerBlock & block = blockIt.second;
         auto row = int(block.block.header_text.lines.size());
-        for(auto & instr : block.block.instrs)
+        for(Instr & instr : block.block.instrs)
         {
             if(this->cur_instr == instr.addr)
             {
@@ -1076,9 +1076,9 @@ bool DisassemblerView::navigate(duint addr)
     //Check to see if address is within current function
     for(auto & blockIt : this->blocks)
     {
-        auto & block = blockIt.second;
+        DisassemblerBlock & block = blockIt.second;
         auto row = int(block.block.header_text.lines.size());
-        for(auto & instr : block.block.instrs)
+        for(Instr & instr : block.block.instrs)
         {
             if((addr >= instr.addr) && (addr < (instr.addr + int(instr.opcode.size()))))
             {
