@@ -1026,7 +1026,7 @@ void DisassemblerView::renderFunction(Function & func)
         this->verticalScrollBar()->setValue(0);
     }
 
-    this->update_id = func.update_id;
+    this->analysis.update_id = this->update_id = func.update_id;
     this->ready = true;
     this->viewport()->update(0, 0, areaSize.width(), areaSize.height());
     puts("Finished");
@@ -1050,6 +1050,7 @@ void DisassemblerView::updateTimerEvent()
         //Check for updated code
         if(this->update_id != this->analysis.update_id)
             this->renderFunction(this->analysis.functions[this->function]);
+        return;
     }
 
     //View not up to date, check to see if active function is ready
