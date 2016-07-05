@@ -60,6 +60,7 @@ struct DisassemblerEdge
         point.row = row;
         point.col = col;
         point.index = 0;
+        this->points.push_back(point);
         if(int(this->points.size()) > 1)
             this->points[this->points.size() - 2].index = index;
     }
@@ -128,6 +129,19 @@ struct Text
         lv.push_back(line);
         lines.push_back(lv);
     }
+
+    QString ToQString() const
+    {
+        QString result;
+        for(auto & line : lines)
+        {
+            for(auto & t : line)
+            {
+                result += t.text;
+            }
+        }
+        return std::move(result);
+    }
 };
 
 struct Instr
@@ -145,21 +159,34 @@ struct Block
     duint entry = 0;
     duint true_path = 0;
     duint false_path = 0;
+
+    void print() const
+    {
+        puts("----BLOCK---");
+        printf("header_text: %s\n", header_text.ToQString().toUtf8().constData());
+        puts("exits:");
+        for(auto exit : exits)
+            printf("%X ", exit);
+        puts("\n--ENDBLOCK--");
+    }
 };
 
 struct DisassemblerBlock
 {
     DisassemblerBlock() {}
-    DisassemblerBlock(Block & block)
+    explicit DisassemblerBlock(Block & block)
         : block(block) {}
+
+    void print() const
+    {
+        block.print();
+    }
 
     Block block;
     std::vector<DisassemblerEdge> edges;
     std::vector<duint> incoming;
     std::vector<duint> new_exits;
-    std::vector<DisassemblerEdge> exits;
-    DisassemblerEdge true_path;
-    DisassemblerEdge false_path;
+
     qreal x = 0.0;
     qreal y = 0.0;
     int width = 0;

@@ -44,7 +44,7 @@ DisassemblerView::DisassemblerView(const Analysis & analysis, QWidget* parent)
     this->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     this->horizontalScrollBar()->setSingleStep(this->charWidth);
     this->verticalScrollBar()->setSingleStep(this->charHeight);
-    auto areaSize = this->viewport()->size();
+    QSize areaSize = this->viewport()->size();
     this->adjustSize(areaSize.width(), areaSize.height());
 }
 
@@ -750,6 +750,8 @@ static void initVec(std::vector<T> & vec, size_t size, T value)
 
 void DisassemblerView::renderFunction(Function & func)
 {
+    puts("Starting renderFunction");
+
     //Create render nodes
     this->blocks.clear();
     for(Block & block : func.blocks)
@@ -757,6 +759,7 @@ void DisassemblerView::renderFunction(Function & func)
         this->blocks[block.entry] = DisassemblerBlock(block);
         this->prepareGraphNode(this->blocks[block.entry]);
     }
+    puts("Create render nodes");
 
     //Populate incoming lists
     for(auto & blockIt : this->blocks)
@@ -765,6 +768,7 @@ void DisassemblerView::renderFunction(Function & func)
         for(auto & edge : block.block.exits)
             this->blocks[edge].incoming.push_back(block.block.entry);
     }
+    puts("Populate incoming lists");
 
     //Construct acyclic graph where each node is used as an edge exactly once
     //auto block = func.blocks[func.entry];
@@ -774,6 +778,8 @@ void DisassemblerView::renderFunction(Function & func)
     queue.push(this->blocks[func.entry]);
     auto changed = true;
 
+    int best_edges;
+    DisassemblerBlock best_parent;
     while(changed)
     {
         changed = false;
@@ -803,8 +809,6 @@ void DisassemblerView::renderFunction(Function & func)
 
         //No more nodes satisfy constraints, pick a node to continue constructing the graph
         duint best = 0;
-        int best_edges;
-        DisassemblerBlock best_parent;
         for(auto & blockIt : this->blocks)
         {
             DisassemblerBlock & block = blockIt.second;
@@ -832,9 +836,11 @@ void DisassemblerView::renderFunction(Function & func)
             changed = true;
         }
     }
+    puts("Construct acyclic graph where each node is used as an edge exactly once");
 
     //Compute graph layout from bottom up
     this->computeGraphLayout(this->blocks[func.entry]);
+    puts("Compute graph layout from bottom up");
 
     //Prepare edge routing
     EdgesVector horiz_edges, vert_edges;
@@ -846,7 +852,7 @@ void DisassemblerView::renderFunction(Function & func)
     {
         horiz_edges[row].resize(this->blocks[func.entry].col_count + 1);
         vert_edges[row].resize(this->blocks[func.entry].col_count + 1);
-        edge_valid[row].resize(this->blocks[func.entry].col_count + 1);
+        initVec(edge_valid[row], this->blocks[func.entry].col_count + 1, true);
         for(int col = 0; col < this->blocks[func.entry].col_count + 1; col++)
         {
             horiz_edges[row][col].clear();
@@ -858,15 +864,16 @@ void DisassemblerView::renderFunction(Function & func)
         DisassemblerBlock & block = blockIt.second;
         edge_valid[block.row][block.col + 1] = false;
     }
+    puts("Prepare edge routing");
 
     //Perform edge routing
     for(auto & blockIt : this->blocks)
     {
         DisassemblerBlock & block = blockIt.second;
-        auto start = block; //TODO: maybe needs to be a reference?
-        for(duint & edge : block.block.exits)
+        DisassemblerBlock & start = block;
+        for(duint edge : block.block.exits)
         {
-            auto end = this->blocks[edge];
+            DisassemblerBlock & end = this->blocks[edge];
             QColor color(Qt::black);
             if(edge == block.block.true_path)
                 color = QColor(0, 144, 0);
@@ -875,6 +882,7 @@ void DisassemblerView::renderFunction(Function & func)
             start.edges.push_back(this->routeEdge(horiz_edges, vert_edges, edge_valid, start, end, color));
         }
     }
+    puts("Perform edge routing");
 
     //Compute edge counts for each row and column
     std::vector<int> col_edge_count, row_edge_count;
@@ -890,6 +898,7 @@ void DisassemblerView::renderFunction(Function & func)
                 col_edge_count[col] = int(vert_edges[row][col].size());
         }
     }
+    puts("Compute edge counts for each row and column");
 
     //Compute row and column sizes
     std::vector<int> col_width, row_height;
@@ -905,6 +914,7 @@ void DisassemblerView::renderFunction(Function & func)
         if(int(block.height) > row_height[block.row])
             row_height[block.row] = int(block.height);
     }
+    puts("Compute row and column sizes");
 
     //Compute row and column positions
     std::vector<int> col_x, row_y;
@@ -932,6 +942,7 @@ void DisassemblerView::renderFunction(Function & func)
     this->row_edge_y[this->blocks[func.entry].row_count] = y;
     this->width = x + 16 + (8 * col_edge_count[this->blocks[func.entry].col_count]);
     this->height = y + 16 + (8 * row_edge_count[this->blocks[func.entry].row_count]);
+    puts("Compute row and column positions");
 
     //Compute node positions
     for(auto & blockIt : this->blocks)
@@ -948,6 +959,7 @@ void DisassemblerView::renderFunction(Function & func)
         }
         block.y = row_y[block.row];
     }
+    puts("Compute node positions");
 
     //Precompute coordinates for edges
     for(auto & blockIt : this->blocks)
@@ -991,10 +1003,12 @@ void DisassemblerView::renderFunction(Function & func)
             edge.arrow = pts;
         }
     }
+    puts("Precompute coordinates for edges");
 
     //Adjust scroll bars for new size
     auto areaSize = this->viewport()->size();
     this->adjustSize(areaSize.width(), areaSize.height());
+    puts("Adjust scroll bars for new size");
 
     if(this->desired_pos)
     {
@@ -1015,6 +1029,7 @@ void DisassemblerView::renderFunction(Function & func)
     this->update_id = func.update_id;
     this->ready = true;
     this->viewport()->update(0, 0, areaSize.width(), areaSize.height());
+    puts("Finished");
 }
 
 void DisassemblerView::updateTimerEvent()

@@ -7,25 +7,41 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     Data data;
-    data.entry = 0x401000;
+    data.entry = 10;
     Analysis anal(data);
     {
         Function func;
-        func.entry = 0x401000;
+        func.entry = 10;
         func.ready = true;
         func.update_id = 0;
         {
-            Block block;
-            block.entry = func.entry;
-            block.header_text = Text("block.header_text", Qt::red, block.entry);
+            Block block1;
+            block1.entry = 10;
+            block1.header_text = Text("block1.header_text", Qt::red, block1.entry);
             {
                 Instr instr;
-                instr.addr = block.entry;
+                instr.addr = block1.entry;
                 instr.opcode.push_back(0x90);
-                instr.text = Text("block.instr", Qt::blue, instr.addr);
-                block.instrs.push_back(instr);
+                instr.text = Text("block1.instr", Qt::blue, instr.addr);
+                block1.instrs.push_back(instr);
             }
-            func.blocks.push_back(block);
+            block1.true_path = 20;
+            block1.exits.push_back(block1.true_path);
+
+            func.blocks.push_back(block1);
+        }
+        {
+            Block block2;
+            block2.entry = 20;
+            block2.header_text = Text("block2.header_text", Qt::red, block2.entry);
+            {
+                Instr instr;
+                instr.addr = block2.entry;
+                instr.opcode.push_back(0x90);
+                instr.text = Text("block2.instr", Qt::blue, instr.addr);
+                block2.instrs.push_back(instr);
+            }
+            func.blocks.push_back(block2);
         }
         anal.functions.insert({func.entry, func});
     }
