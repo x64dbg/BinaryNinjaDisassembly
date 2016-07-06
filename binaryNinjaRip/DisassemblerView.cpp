@@ -444,9 +444,10 @@ void DisassemblerView::mousePressEvent(QMouseEvent* event)
 
     this->viewport()->update();
 
-    //TODO: context menu
-    /*if((instr != 0) && (event->button() == Qt::RightButton))
-        this->context_menu(instr);*/
+    if((instr != 0) && (event->button() == Qt::RightButton))
+    {
+        //TODO: context menu
+    }
 }
 
 void DisassemblerView::mouseMoveEvent(QMouseEvent* event)
@@ -481,11 +482,10 @@ void DisassemblerView::mouseDoubleClickEvent(QMouseEvent* event)
     Token token;
     if(this->getTokenForMouseEvent(event, token))
     {
-        //TODO: locking?
         if(!this->analysis.functions.count(token.addr))
         {
             //Not a function or not analyzed, go to address in hex editor
-            //TODO
+            //TODO: show in hex editor?
         }
         else
         {
@@ -993,7 +993,6 @@ void DisassemblerView::renderFunction(Function & func)
         for(DisassemblerEdge & edge : block.edges)
         {
             auto start = edge.points[0];
-            //auto start_row = start.row; //TODO: bug?
             auto start_col = start.col;
             auto last_index = edge.start_index;
             auto last_pt = QPoint(this->col_edge_x[start_col] + (8 * last_index) + 4,
@@ -1066,7 +1065,6 @@ void DisassemblerView::updateTimerEvent()
         this->viewport()->update();
     }
 
-    //TODO: locking
     if(this->function == 0)
         return;
 
