@@ -280,8 +280,8 @@ bool DisassemblerView::isMouseEventInBlock(QMouseEvent* event)
     //Convert coordinates to system used in blocks
     int xofs = this->horizontalScrollBar()->value();
     int yofs = this->verticalScrollBar()->value();
-    int x = event->x() + xofs + this->renderXOfs;
-    int y = event->y() + yofs + this->renderYOfs;
+    int x = event->x() + xofs - this->renderXOfs;
+    int y = event->y() + yofs - this->renderYOfs;
 
     // Check each block for hits
     for(auto & blockIt : this->blocks)
