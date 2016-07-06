@@ -420,6 +420,7 @@ void DisassemblerView::mousePressEvent(QMouseEvent* event)
         this->scroll_base_x = event->x();
         this->scroll_base_y = event->y();
         this->scroll_mode = true;
+        this->setCursor(Qt::ClosedHandCursor);
         this->viewport()->grabMouse();
         return;
     }
@@ -465,6 +466,7 @@ void DisassemblerView::mouseReleaseEvent(QMouseEvent* event)
     if(this->scroll_mode)
     {
         this->scroll_mode = false;
+        this->setCursor(Qt::ArrowCursor);
         this->viewport()->releaseMouse();
     }
 }
