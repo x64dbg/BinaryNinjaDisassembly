@@ -508,7 +508,7 @@ void DisassemblerView::adjustGraphLayout(DisassemblerBlock & block, int col, int
 {
     block.col += col;
     block.row += row;
-    for(duint & edge : block.new_exits)
+    for(duint edge : block.new_exits)
         this->adjustGraphLayout(this->blocks[edge], col, row);
 }
 
@@ -517,7 +517,7 @@ void DisassemblerView::computeGraphLayout(DisassemblerBlock & block)
     //Compute child node layouts and arrange them horizontally
     int col = 0;
     int row_count = 1;
-    for(duint & edge : block.new_exits)
+    for(duint edge : block.new_exits)
     {
         this->computeGraphLayout(this->blocks[edge]);
         this->adjustGraphLayout(this->blocks[edge], col, 1);
@@ -774,12 +774,12 @@ void DisassemblerView::renderFunction(Function & func)
     //auto block = func.blocks[func.entry];
     std::unordered_set<duint> visited;
     visited.insert(func.entry);
-    std::queue<DisassemblerBlock> queue;
-    queue.push(this->blocks[func.entry]);
+    std::queue<duint> queue;
+    queue.push(this->blocks[func.entry].block.entry);
     auto changed = true;
 
     int best_edges;
-    DisassemblerBlock best_parent;
+    duint best_parent;
     while(changed)
     {
         changed = false;
@@ -787,10 +787,10 @@ void DisassemblerView::renderFunction(Function & func)
         //First pick nodes that have single entry points
         while(!queue.empty())
         {
-            DisassemblerBlock block = queue.front();
+            DisassemblerBlock & block = this->blocks[queue.front()];
             queue.pop();
 
-            for(duint & edge : block.block.exits)
+            for(duint edge : block.block.exits)
             {
                 if(visited.count(edge))
                     continue;
@@ -800,7 +800,7 @@ void DisassemblerView::renderFunction(Function & func)
                 {
                     removeFromVec(this->blocks[edge].incoming, block.block.entry);
                     block.new_exits.push_back(edge);
-                    queue.push(this->blocks[edge]);
+                    queue.push(this->blocks[edge].block.entry);
                     visited.insert(edge);
                     changed = true;
                 }
@@ -814,7 +814,7 @@ void DisassemblerView::renderFunction(Function & func)
             DisassemblerBlock & block = blockIt.second;
             if(!visited.count(block.block.entry))
                 continue;
-            for(duint & edge : block.block.exits)
+            for(duint edge : block.block.exits)
             {
                 if(visited.count(edge))
                     continue;
@@ -823,15 +823,16 @@ void DisassemblerView::renderFunction(Function & func)
                 {
                     best = edge;
                     best_edges = int(this->blocks[edge].incoming.size());
-                    best_parent = block;
+                    best_parent = block.block.entry;
                 }
             }
         }
 
         if(best != 0)
         {
-            removeFromVec(this->blocks[best].incoming, best_parent.block.entry);
-            best_parent.new_exits.push_back(best);
+            DisassemblerBlock & best_parentb = this->blocks[best_parent];
+            removeFromVec(this->blocks[best].incoming, best_parentb.block.entry);
+            best_parentb.new_exits.push_back(best);
             visited.insert(best);
             changed = true;
         }

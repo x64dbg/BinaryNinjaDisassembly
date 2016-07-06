@@ -27,6 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
             }
             block1.true_path = 20;
             block1.exits.push_back(block1.true_path);
+            block1.false_path = block1.entry;
+            block1.exits.push_back(block1.false_path);
 
             func.blocks.push_back(block1);
         }
