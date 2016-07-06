@@ -90,6 +90,7 @@ struct HighlightToken
 
     static HighlightToken* fromToken(const Token & token)
     {
+        //TODO: memory leaks
         auto result = new HighlightToken();
         result->type = token.type;
         result->addr = token.addr;

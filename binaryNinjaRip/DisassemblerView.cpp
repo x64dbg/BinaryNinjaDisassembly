@@ -61,21 +61,21 @@ void DisassemblerView::initFont()
 void DisassemblerView::adjustSize(int width, int height)
 {
     //Recompute size information
-    this->renderWidth = width;
-    this->renderHeight = height;
+    this->renderWidth = this->width;
+    this->renderHeight = this->height;
     this->renderXOfs = 0;
     this->renderYOfs = 0;
-    if(this->renderWidth < width) //TODO: dead
+    if(this->renderWidth < width)
     {
         this->renderXOfs = (width - this->renderWidth) / 2;
         this->renderWidth = width;
     }
-    if(this->renderHeight < height) //TODO: dead
+    if(this->renderHeight < height)
     {
         this->renderYOfs = (height - this->renderHeight) / 2;
         this->renderHeight = height;
     }
-    //Update scroll bar information (TODO: dead)
+    //Update scroll bar information
     this->horizontalScrollBar()->setPageStep(width);
     this->horizontalScrollBar()->setRange(0, this->renderWidth - width);
     this->verticalScrollBar()->setPageStep(height);
@@ -97,7 +97,10 @@ duint DisassemblerView::get_cursor_pos()
 void DisassemblerView::set_cursor_pos(duint addr)
 {
     Q_UNUSED(addr);
-    //TODO
+    if(!this->navigate(addr))
+    {
+        //TODO: show in hex editor?
+    }
 }
 
 std::tuple<duint, duint> DisassemblerView::get_selection_range()
@@ -441,6 +444,7 @@ void DisassemblerView::mousePressEvent(QMouseEvent* event)
 
     this->viewport()->update();
 
+    //TODO: context menu
     /*if((instr != 0) && (event->button() == Qt::RightButton))
         this->context_menu(instr);*/
 }
@@ -474,7 +478,25 @@ void DisassemblerView::mouseReleaseEvent(QMouseEvent* event)
 void DisassemblerView::mouseDoubleClickEvent(QMouseEvent* event)
 {
     Q_UNUSED(event);
-    //TODO
+    Token token;
+    if(this->getTokenForMouseEvent(event, token))
+    {
+        //TODO: locking?
+        if(!this->analysis.functions.count(token.addr))
+        {
+            //Not a function or not analyzed, go to address in hex editor
+            //TODO
+        }
+        else
+        {
+            this->function = token.addr;
+            this->ready = false;
+            this->desired_pos = nullptr;
+            this->cur_instr = 0;
+            this->highlight_token = nullptr;
+            this->viewport()->update();
+        }
+    }
 }
 
 void DisassemblerView::prepareGraphNode(DisassemblerBlock & block)
