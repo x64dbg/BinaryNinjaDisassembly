@@ -82,7 +82,7 @@ void DisassemblerView::adjustSize(int width, int height)
     this->verticalScrollBar()->setRange(0, this->renderHeight - height);
 }
 
-void DisassemblerView::resizeEvent(QResizeEvent *event)
+void DisassemblerView::resizeEvent(QResizeEvent* event)
 {
     adjustSize(event->size().width(), event->size().height());
 }
@@ -135,7 +135,7 @@ void DisassemblerView::paintEvent(QPaintEvent* event)
     {
         //Analysis for the current function is not yet complete, paint loading screen
         QLinearGradient gradient = QLinearGradient(QPointF(0, 0),
-                                                   QPointF(this->viewport()->size().height(), this->viewport()->size().height()));
+                                   QPointF(this->viewport()->size().height(), this->viewport()->size().height()));
         gradient.setColorAt(0, QColor(232, 232, 232));
         gradient.setColorAt(1, QColor(192, 192, 192));
         p.setPen(QColor(0, 0, 0, 0));
@@ -172,7 +172,7 @@ void DisassemblerView::paintEvent(QPaintEvent* event)
 
         //Render node background
         QLinearGradient gradient = QLinearGradient(QPointF(0, block.y + this->charWidth),
-                                                   QPointF(0, block.y + block.height - this->charWidth));
+                                   QPointF(0, block.y + block.height - this->charWidth));
         gradient.setColorAt(0, QColor(255, 255, 252));
         gradient.setColorAt(1, QColor(255, 255, 232));
         p.setPen(Qt::black);
@@ -181,7 +181,7 @@ void DisassemblerView::paintEvent(QPaintEvent* event)
                    block.width - (4 + 2 * this->charWidth), block.height - (4 + 2 * this->charWidth));
 
         //Print current instruction background
-        if (this->cur_instr != 0)
+        if(this->cur_instr != 0)
         {
             int y = block.y + (2 * this->charWidth) + (int(block.block.header_text.lines.size()) * this->charHeight);
             for(Instr & instr : block.block.instrs)
@@ -588,7 +588,7 @@ int DisassemblerView::findHorizEdgeIndex(EdgesVector & edges, int row, int min_c
     while(true)
     {
         bool valid = true;
-        for(int col=min_col; col<max_col+1; col++) //TODO: use max_col+1 ?
+        for(int col = min_col; col < max_col + 1; col++) //TODO: use max_col+1 ?
             if(isEdgeMarked(edges, row, col, i))
             {
                 valid = false;
@@ -600,19 +600,19 @@ int DisassemblerView::findHorizEdgeIndex(EdgesVector & edges, int row, int min_c
     }
 
     //Mark chosen index as used
-    for(int col = min_col; col < max_col+1; col++) //TODO: use max_col+1 ?
+    for(int col = min_col; col < max_col + 1; col++) //TODO: use max_col+1 ?
         this->markEdge(edges, row, col, i);
     return i;
 }
 
-int DisassemblerView::findVertEdgeIndex(EdgesVector &edges, int col, int min_row, int max_row)
+int DisassemblerView::findVertEdgeIndex(EdgesVector & edges, int col, int min_row, int max_row)
 {
     //Find a valid index
     int i = 0;
     while(true)
     {
         bool valid = true;
-        for(int row=min_row; row<max_row+1; row++) //TODO: use max_row+1 ?
+        for(int row = min_row; row < max_row + 1; row++) //TODO: use max_row+1 ?
             if(isEdgeMarked(edges, row, col, i))
             {
                 valid = false;
@@ -624,7 +624,7 @@ int DisassemblerView::findVertEdgeIndex(EdgesVector &edges, int col, int min_row
     }
 
     //Mark chosen index as used
-    for(int row = min_row; row < max_row+1; row++) //TODO: use max_row+1 ?
+    for(int row = min_row; row < max_row + 1; row++) //TODO: use max_row+1 ?
         this->markEdge(edges, row, col, i);
     return i;
 }
@@ -974,13 +974,13 @@ void DisassemblerView::renderFunction(Function & func)
     {
         DisassemblerBlock & block = blockIt.second;
         block.x = int(
-                    (col_x[block.col] + col_width[block.col] + 4 * col_edge_count[block.col + 1]) - (block.width / 2));
+                      (col_x[block.col] + col_width[block.col] + 4 * col_edge_count[block.col + 1]) - (block.width / 2));
         if((block.x + block.width) > (
                     col_x[block.col] + col_width[block.col] + col_width[block.col + 1] + 8 * col_edge_count[
-                    block.col + 1]))
+                        block.col + 1]))
         {
             block.x = int((col_x[block.col] + col_width[block.col] + col_width[block.col + 1] + 8 * col_edge_count[
-                    block.col + 1]) - block.width);
+                               block.col + 1]) - block.width);
         }
         block.y = row_y[block.row];
     }

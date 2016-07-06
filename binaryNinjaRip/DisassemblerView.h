@@ -84,8 +84,8 @@ struct HighlightToken
     bool equalsToken(const Token & token)
     {
         return this->type == token.type &&
-                this->addr == token.addr &&
-                this->name == token.name;
+               this->addr == token.addr &&
+               this->name == token.name;
     }
 
     static HighlightToken* fromToken(const Token & token)
